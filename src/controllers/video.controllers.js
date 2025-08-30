@@ -82,6 +82,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   console.log(videoUrl, thumbnailUrl, duration);
 
+  //ApiError is for giving an exception which will not be caught by catch block
+  //ApiResponse is for giving a response to the client directly as to make the user try again
   if (!videoUrl) {
     res.status(400).json(new ApiResponse(400, null, "Video file is required"));
   }
@@ -131,7 +133,36 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: update video details like title, description, thumbnail
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "VideoId is invalid");
+  }
+  const { title, description } = req.body;
+  const thumbnail = req.file;
+
+  console.log(req.body, req.file);
+
+  if (thumbnail) {
+    const thumbnailUrl = await uploadOnCloudinary(thumbnail.path);
+    req.body.thumbnailUrl = thumbnailUrl.url; //updation of thumbnail
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      title,
+      description,
+      thumbnail: req.body.thumbnailUrl,
+    },
+    { new: true }
+  );
+
+  await video.save();
+
+  if (!video) {
+    throw new ApiError(400, "Video not found");
+  }
+
+  return res.status(200).json(200, video, "Video updated successfully");
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
