@@ -75,6 +75,36 @@ const publishAVideo = asyncHandler(async (req, res) => {
     req.files?.thumbnail?.[0]?.path,
     "thumbnails"
   );
+
+  const videoUrl = VideoCloud.secure_url; //secure_url is for cloudinary https link to the media
+  const thumbnailUrl = thumbnailCloud.secure_url;
+  const duration = VideoCloud.duration || 0; //VideoCloud has duration field in it
+
+  console.log(videoUrl, thumbnailUrl, duration);
+
+  if (!videoUrl) {
+    res.status(400).json(new ApiResponse(400, null, "Video file is required"));
+  }
+  if (!thumbnailUrl) {
+    res
+      .status(400)
+      .json(new ApiResponse(400, null, "Thubnail file is required"));
+  }
+
+  const video = await Video.create({
+    videoFile: videoUrl,
+    thumbnail: thumbnailUrl,
+    title,
+    description,
+    duration,
+    isPublished,
+    owner: req.user._id,
+  });
+
+  await video.save();
+  res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video published successfully"));
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
