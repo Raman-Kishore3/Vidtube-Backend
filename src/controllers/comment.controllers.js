@@ -12,10 +12,12 @@ const getVideoComments = asyncHandler(async (req, res) => {
   if (!videoId) {
     throw new ApiError(400, "Video Id is required");
   }
-  const skip = (page - 1) * limit;
+  const limitNum = parseInt(limit);
+  const pageNum = parseInt(page);
+  const skip = (pageNum - 1) * limitNum;
   const comments = await Comment.find({ video: videoId })
     .skip(skip)
-    .limit(limit);
+    .limit(limitNum);
   return res
     .status(200)
     .json(new ApiResponse(200, comments, "successfully retrieved comments"));
